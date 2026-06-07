@@ -1,0 +1,26 @@
+{% extends 'header.html' %}
+
+{% block content %}
+<section class="task-form-section" style="max-width: 500px; margin: 0 auto;">
+    <h2 style="text-align: center; color: var(--primary-color);">新規ユーザー登録</h2>
+    <form method="post">
+        {% csrf_token %}
+        {% for field in form %}
+        <div class="form-group">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}
+                <small style="color: #666; font-size: 0.8em; display: block; margin-top: 5px;">{{ field.help_text|safe }}</small>
+            {% endif %}
+            {% for error in field.errors %}
+                <p style="color: var(--danger-color); font-size: 0.85em; margin-top: 5px;">{{ error }}</p>
+            {% endfor %}
+        </div>
+        {% endfor %}
+        <button type="submit" class="btn btn-primary" style="margin-top: 20px;">登録する</button>
+    </form>
+    <p style="text-align: center; margin-top: 25px; font-size: 0.9em;">
+        すでにアカウントをお持ちの方は<a href="{% url 'login' %}" style="color: var(--primary-color); font-weight: bold; text-decoration: none;">こちら</a>からログインしてください。
+    </p>
+</section>
+{% endblock %}

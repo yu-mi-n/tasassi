@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>タスアシ（仮）</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <!-- SortableJS の読み込み -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="brand-logo">
+                <svg width="36" height="36" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="40" height="40" rx="12" fill="url(#logo-grad)"/>
+                    <!-- 左側のチェック（伴走者・アシスト） -->
+                    <path d="M10 20L15 25L24 14" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity="0.6"/>
+                    <!-- 右側のチェック（ユーザー・目標達成） -->
+                    <path d="M18 23L23 28L32 12" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                    <defs>
+                        <linearGradient id="logo-grad" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+                            <stop stop-color="#4A90E2" />
+                            <stop offset="1" stop-color="#00d2ff" />
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <h1>タスアシ（仮）</h1>
+            </div>
+            <nav class="main-nav">
+                {% if user.is_authenticated %}
+                    <span style="display:flex; align-items:center; font-weight: bold; margin-right: 15px; color:#5c6bc0;">{{ user.username }}さん</span>
+                    <button class="nav-btn active" data-target="page-home">ホーム</button>
+                    <button class="nav-btn" data-target="page-register">登録</button>
+                    <button class="nav-btn" data-target="page-list">一覧</button>
+                    <form action="{% url 'logout' %}" method="post" style="display:inline; margin-left:10px;">
+                        {% csrf_token %}
+                        <button type="submit" class="auth-btn" title="ログアウト" style="padding: 10px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                                <polyline points="16 17 21 12 16 7"></polyline>
+                                <line x1="21" y1="12" x2="9" y2="12"></line>
+                            </svg>
+                        </button>
+                    </form>
+                {% else %}
+                    <a href="{% url 'login' %}" class="auth-btn {% if request.resolver_match.url_name == 'login' %}active{% endif %}">ログイン</a>
+                    <a href="{% url 'signup' %}" class="auth-btn {% if request.resolver_match.url_name == 'signup' %}active{% endif %}">新規登録</a>
+                {% endif %}
+            </nav>
+        </header>
+
+        <!-- 個別のページ内容はここに挿入される -->
+        <main class="main-content">
+            {% block content %}
+            {% endblock %}
+        </main>
+    </div>
+    
+    <script src="{% static 'js/main.js' %}"></script>
+</body>
+</html>

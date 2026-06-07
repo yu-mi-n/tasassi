@@ -1,0 +1,199 @@
+{% extends 'header.html' %}
+
+{% block content %}
+
+        <!-- ホーム画面 -->
+        <div id="page-home" class="page-section">
+            <section class="task-form-section">
+                <h2>ホーム</h2>
+                <p>現在ホーム画面を作成中です。今後、学習の進捗ダッシュボードなどを追加予定です。</p>
+            </section>
+        </div>
+
+        <!-- 登録画面 -->
+        <div id="page-register" class="page-section" style="display: none;">
+            <div class="tab-nav">
+                <button class="tab-btn active" data-target="form-task">タスク登録</button>
+                <button class="tab-btn" data-target="form-goal">目標登録</button>
+            </div>
+            
+            <div class="tab-container">
+                <section id="form-task" class="tab-content task-form-section">
+                    <h2>新規タスク登録</h2>
+                    {% if not goals %}
+                    <div class="guide-message">
+                        まだ最終目標が登録されていません。<br>
+                        まずは「目標登録」タブから、あなたのゴールを設定してみましょう！
+                    </div>
+                    {% endif %}
+                    <form action="{% url 'tasks:task_create' %}" method="POST" class="task-form">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="goal_id">紐づける目標</label>
+                            <select id="goal_id" name="goal_id">
+                                <option value="">(なし)</option>
+                                {% for goal in goals %}
+                                    <option value="{{ goal.id }}" {% if last_goal_id == goal.id|stringformat:"s" %}selected{% endif %}>{{ goal.title }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="name">タスク名（例：計算問題）</label>
+                            <input type="text" id="name" name="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="category">カテゴリ</label>
+                            <select id="category" name="category" required>
+                                <option value="">選択してください</option>
+                                {% for value, label in categories %}
+                                    <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="priority">重要度</label>
+                            <select id="priority" name="priority" required>
+                                {% for value, label in priorities %}
+                                    <option value="{{ value }}" {% if value == '2' %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="description">詳細</label>
+                            <textarea id="description" name="description" rows="2"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="due_date">期限</label>
+                            <input type="date" id="due_date" name="due_date" value="{% now 'Y-m-d' %}">
+                        </div>
+                        <button type="submit" class="btn btn-primary">登録する</button>
+                    </form>
+                </section>
+
+                <section id="form-goal" class="tab-content task-form-section" style="display: none;">
+                    <h2>目標登録</h2>
+                    <form action="{% url 'tasks:goal_create' %}" method="POST" class="task-form">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="goal_title">最終目標（例：〇〇資格合格）</label>
+                            <input type="text" id="goal_title" name="title" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="goal_description">詳細・意気込み</label>
+                            <textarea id="goal_description" name="description" rows="2"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">目標を登録する</button>
+                    </form>
+                </section>
+            </div>
+        </div>
+
+        <!-- 一覧画面 -->
+        <div id="page-list" class="page-section" style="display: none;">
+            <div class="tab-nav">
+                <button class="tab-btn active" data-target="list-incomplete">未完了タスク</button>
+                <button class="tab-btn" data-target="list-complete">完了タスク</button>
+            </div>
+
+            <div class="tab-container">
+                <section id="list-incomplete" class="tab-content task-list-section">
+                    <h2>未完了タスク一覧 (ドラッグ＆ドロップで並び替え可能)</h2>
+                    
+                    <div class="filter-section">
+                        <form action="{% url 'tasks:task_list' %}" method="GET" class="filter-form">
+                            <label for="filter_goal">最終目標で絞り込み:</label>
+                            <select id="filter_goal" name="goal_id" onchange="this.form.submit()">
+                                <option value="">すべて</option>
+                                {% for goal in goals %}
+                                    <option value="{{ goal.id }}" {% if selected_goal_id == goal.id|stringformat:"s" %}selected{% endif %}>{{ goal.title }}</option>
+                                {% endfor %}
+                            </select>
+                        </form>
+                    </div>
+
+                    <div class="task-list" id="sortable-task-list">
+                        {% for task in tasks %}
+                        <div class="task-card" data-id="{{ task.id }}">
+                            <div class="drag-handle">☰</div>
+                            <div class="task-header">
+                                <span class="step-badge">Step {{ task.step_number }}</span>
+                                <span class="category-badge">{{ task.category }}</span>
+                                {% if task.goal %}
+                                <span class="goal-badge">{{ task.goal.title }}</span>
+                                {% endif %}
+                            </div>
+                            <div class="task-body">
+                                <h3>{{ task.name }}</h3>
+                                <div style="margin-bottom: 8px;">
+                                    <span class="priority-badge" data-priority="{{ task.priority }}">{{ task.get_priority_display }}</span>
+                                </div>
+                                <p>{{ task.description }}</p>
+                                {% if task.due_date %}
+                                <p class="due-date {% if task.due_date < today %}overdue{% endif %}">期限: {{ task.due_date }}</p>
+                                {% endif %}
+                            </div>
+                            <div class="task-actions">
+                                <form action="{% url 'tasks:task_toggle_complete' task.pk %}" method="POST" class="complete-form">
+                                    {% csrf_token %}
+                                    <button type="button" class="btn btn-success custom-complete-btn" onclick="openCustomModal(this, event)">完了</button>
+                                </form>
+                                <form action="{% url 'tasks:task_delete' task.pk %}" method="POST" class="action-form">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger delete-btn">削除</button>
+                                </form>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="empty-message">現在、未完了のタスクはありません。</p>
+                        {% endfor %}
+                    </div>
+                </section>
+
+                <section id="list-complete" class="tab-content task-list-section" style="display: none;">
+                    <h2>完了済みタスク一覧</h2>
+                    <!-- 完了タスク用のリスト（バックエンドの対応が必要なため枠組みのみ） -->
+                    <div class="task-list">
+                        {% for task in completed_tasks %}
+                            <div class="task-card completed" data-id="{{ task.id }}" style="opacity: 0.8; background-color: #f8f9fa;">
+                                <div class="task-header">
+                                    <span class="step-badge" style="background-color: #6c757d;">Step {{ task.step_number }}</span>
+                                    <span class="category-badge">{{ task.category }}</span>
+                                    {% if task.goal %}
+                                    <span class="goal-badge">{{ task.goal.title }}</span>
+                                    {% endif %}
+                                </div>
+                                <div class="task-body">
+                                    <h3 style="color: #6c757d;">{{ task.name }}</h3>
+                                    <p>{{ task.description }}</p>
+                                </div>
+                                <div class="task-actions">
+                                    <form action="{% url 'tasks:task_toggle_complete' task.pk %}" method="POST" class="action-form">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-secondary">未完了に戻す</button>
+                                    </form>
+                                    <form action="{% url 'tasks:task_delete' task.pk %}" method="POST" class="action-form">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-danger delete-btn">削除</button>
+                                    </form>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <p class="empty-message">完了済みのタスクはまだありません。</p>
+                        {% endfor %}
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <!-- カスタム確認モーダル -->
+        <div id="custom-confirm-modal" class="modal-overlay">
+            <div class="modal-content">
+                <h3>確認</h3>
+                <p>このタスクを完了にしますか？</p>
+                <div class="modal-actions">
+                    <button id="modal-cancel-btn" class="btn btn-secondary">キャンセル</button>
+                    <button id="modal-confirm-btn" class="btn btn-success">完了する</button>
+                </div>
+            </div>
+        </div>
+{% endblock %}
