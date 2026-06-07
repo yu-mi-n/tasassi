@@ -1,5 +1,6 @@
 .venv
 venv
+.gitignore
 .history
 .env
 __pycache__/
