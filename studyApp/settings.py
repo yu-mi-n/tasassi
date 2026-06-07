@@ -17,6 +17,7 @@ DEBUG = os.environ.get('DEBUG') == 'True'
 
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',') if os.environ.get('ALLOWED_HOSTS') else []
 
+CSRF_TRUSTED_ORIGINS = ['https://*.onrender.com']
 
 # Application definition
 
@@ -102,7 +103,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 # 静的ファイルの検索ディレクトリ
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
@@ -110,6 +111,16 @@ STATICFILES_DIRS = [
 
 # 本番環境用の静的ファイル集約ディレクトリ
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# WhiteNoiseを使用した本番環境用の静的ファイル配信
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
 LOGIN_REDIRECT_URL = 'tasks:task_list'
 LOGOUT_REDIRECT_URL = 'login'
